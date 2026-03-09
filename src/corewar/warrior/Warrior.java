@@ -26,7 +26,7 @@ public class Warrior {
     }
 
     public boolean hasProcesses() {
-        return !processes.isEmpty();
+        return isAlive();
     }
 
     public Process getFirstProcess() {
