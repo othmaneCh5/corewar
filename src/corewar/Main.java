@@ -6,6 +6,7 @@ import corewar.instructions.Opecode;
 import corewar.mars.Mars;
 import corewar.memory.Memory;
 import corewar.warrior.Warrior;
+import corewar.parser.RedcodeParser;
 
 public class Main {
 
@@ -314,6 +315,67 @@ public class Main {
         assertEquals("maxCycles => 10 cycles", result.cycles, 10);
     }
 
+
+    // =============================================================================
+    // Parser
+    // =============================================================================
+
+    private static void testParser() {
+
+        System.out.println("\n-- Parser --");
+
+        // Test 1 : MOV simple
+        Instructions mov = RedcodeParser.parseLine("MOV 0, 1");
+        assertTrue("Parser: MOV opcode correct",
+            mov.opecode == Opecode.MOV, "opcode faux");
+        assertTrue("Parser: MOV modeA = DIRECT",
+            mov.modeA == AddrMode.DIRECT, "modeA faux");
+        assertTrue("Parser: MOV valA = 0",
+            mov.parametreA == 0, "valA faux");
+        assertTrue("Parser: MOV valB = 1",
+            mov.parametreB == 1, "valB faux");
+
+        // Test 2 : mode IMMEDIATE avec #
+        Instructions add = RedcodeParser.parseLine("ADD #4, 3");
+        assertTrue("Parser: ADD modeA = IMMEDIATE",
+            add.modeA == AddrMode.IMMEDIATE, "modeA faux");
+        assertTrue("Parser: ADD valA = 4",
+            add.parametreA == 4, "valA faux");
+        assertTrue("Parser: ADD valB = 3",
+            add.parametreB == 3, "valB faux");
+
+        // Test 3 : commentaire doit être ignoré
+        Instructions nul = RedcodeParser.parseLine("; je suis un commentaire");
+        assertTrue("Parser: commentaire = null",
+            nul == null, "devrait être null");
+
+        // Test 4 : valeur négative
+        Instructions jmp = RedcodeParser.parseLine("JMP -2, 0");
+        assertTrue("Parser: JMP valA = -2",
+            jmp.parametreA == -2, "valA faux");
+
+        // Test 5 : programme depuis String
+        Instructions[] prog = RedcodeParser.parseString(
+            "; name Test\n" +
+            "\n" +
+            "MOV 0, 1\n" +
+            "JMP -1, 0\n"
+        );
+        assertTrue("Parser: 2 instructions",
+            prog.length == 2, "longueur = " + prog.length);
+
+        // Test 6 : charger imp.red depuis fichier
+        try {
+            Instructions[] imp = RedcodeParser.parseFile("warriors/imp.red");
+            assertTrue("Parser: imp.red chargé correctement",
+                imp.length == 1, "longueur = " + imp.length);
+            assertTrue("Parser: imp.red = MOV",
+                imp[0].opecode == Opecode.MOV, "opcode faux");
+        } catch (Exception e) {
+            ko("Parser: parseFile imp.red", e.getMessage());
+        }
+}
+
     // =========================================================
     // Main
     // =========================================================
@@ -350,6 +412,9 @@ public class Main {
         testTwoWarriorsOneWins();
         testTwoWarriorsDraw();
         testMaxCyclesReachedIsDraw();
+
+        System.out.println("\n-- Parser --");
+        testParser();
 
         System.out.println("\n=== Summary ===");
         System.out.println("Passed : " + passed);
